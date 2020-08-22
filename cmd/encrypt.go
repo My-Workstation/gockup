@@ -15,9 +15,9 @@ import (
 // goCkup encrypt --keyFile='32bitkey' _fileName_ _fileNameOutput_
 // todo suggest for bash
 var CmdEncrypt = &cobra.Command{
-	Use:   "encrypt _filename_",
-	Short: "Take _filename_ ane encrypt it",
-	Long:  `Take _filename_ ane encrypt it`,
+	Use:   "encrypt _filename_ [encryptedFile]",
+	Short: "Take _filename_ and encrypt it",
+	Long:  `Take _filename_ and encrypt it`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		encrypt(args, encryptionKeyFlag, encryptionKeyFileFlag)
@@ -28,7 +28,7 @@ var encryptionKeyFileFlag string
 
 func init() {
 	CmdEncrypt.Flags().StringVar(&encryptionKeyFlag, "key", "", "key for encryption")
-	CmdEncrypt.Flags().StringVar(&encryptionKeyFileFlag, "keyFile", "", "key for encryption.!!!! Should be 32 Byte!!!")
+	CmdEncrypt.Flags().StringVar(&encryptionKeyFileFlag, "keyFile", "", "key for encryption!!!! Should be 32 Byte!!!")
 }
 
 func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag string) {
@@ -38,16 +38,16 @@ func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag stri
 			// try to open file
 			encryptionKeyFile, err := os.Open(encryptionKeyFileFlag)
 			if err != nil {
-				log.Fatalf("Can not open key file. %v", err)
+				log.Fatal("Can not open key file. %v", err)
 			}
 			defer encryptionKeyFile.Close()
 			tmp := make([]byte, 33)
 			count, err := encryptionKeyFile.Read(tmp)
 			if err != nil {
-				log.Fatalf("Can not read key file. %v", err)
+				log.Fatal("Can not read key file. %v", err)
 			}
 			if count < 32 {
-				log.Fatalf("Key should be 32 bytes")
+				log.Fatal("Key should be 32 bytes")
 			} else if count > 32 {
 				log.Print("Key should be 32 bytes. Only the first 32 bytes will be used.")
 			}
@@ -58,7 +58,7 @@ func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag stri
 			log.Print("The keyFile does not matter. The key has priority over the keyFile.")
 		}
 		if len(encryptionKeyFlag) < 32 {
-			log.Fatalf("Key should be 32 bytes")
+			log.Fatal("Key should be 32 bytes")
 		} else if len(encryptionKeyFlag) > 32 {
 			log.Print("Key should be 32 bytes. Only the first 32 bytes will be used.")
 		}
