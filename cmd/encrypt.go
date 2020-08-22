@@ -31,8 +31,8 @@ func init() {
 	CmdEncrypt.Flags().StringVar(&encryptionKeyFileFlag, "keyFile", "", "key for encryption!!!! Should be 32 Byte!!!")
 }
 
-func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag string) {
-	encryptionKey := make([]byte, 32)
+func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag string) string {
+	var encryptionKey []byte
 	if len(encryptionKeyFlag) == 0 {
 		if len(encryptionKeyFileFlag) != 0 {
 			encryptionKey = utils.ReadKeyFromFile(encryptionKeyFileFlag)
@@ -50,7 +50,16 @@ func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag stri
 	}
 	if len(encryptionKey) == 0 {
 		encryptionKey = utils.MakeRandom(32)
-		log.Print("The key wasn't handed over. It will be generated automatically. Key:", encryptionKey)
+		log.Print("The key wasn't handed over. It will be generated automatically.")
+		keyFile, err := os.OpenFile("key", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+		if err != nil {
+			log.Fatalf("Can not create key file. %v", err)
+		}
+		defer keyFile.Close()
+		_, err = keyFile.Write(encryptionKey)
+		if err != nil {
+			log.Fatalf("Can not write key file. %v", err)
+		}
 	}
 
 	fileToEncode, _ := os.Open(args[0])
@@ -79,6 +88,7 @@ func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag stri
 	if _, err := io.Copy(writer, fileToEncode); err != nil {
 		log.Fatalf("Error during encription. %v", err)
 	}
+	return encodedFileName
 }
 
 // block cipher
