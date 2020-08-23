@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 )
 
 // goCkup encrypt _fileName_ _fileNameOutput_ <- random generated key. Should be logged out at the end.
@@ -33,6 +34,7 @@ func init() {
 
 func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag string) string {
 	var encryptionKey []byte
+	now := time.Now().Format(time.RFC3339)
 	if len(encryptionKeyFlag) == 0 {
 		if len(encryptionKeyFileFlag) != 0 {
 			encryptionKey = utils.ReadKeyFromFile(encryptionKeyFileFlag)
@@ -51,7 +53,8 @@ func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag stri
 	if len(encryptionKey) == 0 {
 		encryptionKey = utils.MakeRandom(32)
 		log.Print("The key wasn't handed over. It will be generated automatically.")
-		keyFile, err := os.OpenFile("key", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+
+		keyFile, err := os.OpenFile("key_"+now, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
 			log.Fatalf("Can not create key file. %v", err)
 		}
@@ -64,7 +67,7 @@ func encrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag stri
 
 	fileToEncode, _ := os.Open(args[0])
 	defer fileToEncode.Close()
-	encodedFileName := "./encrypted"
+	encodedFileName := "./encrypted_" + now
 	if len(args) > 1 && len(args[1]) != 0 {
 		encodedFileName = args[1]
 	}
