@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"goCkup/utils"
+	"google.golang.org/api/drive/v3"
 	"io"
 	"log"
 	"os"
@@ -24,6 +25,14 @@ var CmdDownload = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		download(args)
 	},
+}
+
+var decryptFlag bool
+
+func init() {
+	CmdDownload.Flags().StringVar(&decryptionKeyFlag, "key", "", "key for encryption!!!! Should be 32 Byte!!!")
+	CmdDownload.Flags().StringVar(&decryptionKeyFileFlag, "keyFile", "", "key for encryption!!!! Should be 32 Byte!!!")
+	CmdDownload.Flags().BoolVar(&decryptFlag, "decrypt", false, "Flag that indicates whether the downloaded file should be encrypted.")
 }
 
 func download(args []string) {
@@ -52,20 +61,33 @@ func download(args []string) {
 			fmt.Println("It is out of the range.")
 		} else {
 			index = 1
+			var gFile *drive.File
 			for _, file := range filesList.Files {
 				if index == indexToDownload {
-					resp, err := service.Files.Get(file.Id).Download()
-					if err != nil {
-						log.Fatalf("Error while getting file. %v", err)
-					}
-					fileToDownload, _ := os.OpenFile("download", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-					defer fileToDownload.Close()
-					if _, err := io.Copy(fileToDownload, resp.Body); err != nil {
-						log.Fatalf("Error during encription. %v", err)
-					}
+					gFile = file
 					break
 				}
 				index++
+			}
+			if gFile == nil {
+				log.Fatal("unknown error")
+			}
+			resp, err := service.Files.Get(gFile.Id).Download()
+			if err != nil {
+				log.Fatalf("Error while getting file. %v", err)
+			}
+			fileNameToDownload := args[0]
+			if decryptFlag {
+				fileNameToDownload += ".enc"
+			}
+			fileToDownload, _ := os.OpenFile(fileNameToDownload, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+			defer fileToDownload.Close()
+			if _, err := io.Copy(fileToDownload, resp.Body); err != nil {
+				log.Fatalf("Error during encription. %v", err)
+			}
+			if decryptFlag {
+				decrypt([]string{fileNameToDownload, args[0]}, decryptionKeyFlag, decryptionKeyFileFlag)
+				defer os.Remove(fileNameToDownload)
 			}
 			break
 		}

@@ -19,33 +19,36 @@ var CmdDecrypt = &cobra.Command{
 	Long:  `Take _filename_ and decrypt it`,
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		decrypt(args, encryptionKeyFlag, encryptionKeyFileFlag)
+		decrypt(args, decryptionKeyFlag, decryptionKeyFileFlag)
 	},
 }
 
+var decryptionKeyFlag string
+var decryptionKeyFileFlag string
+
 func init() {
-	CmdDecrypt.Flags().StringVar(&encryptionKeyFlag, "key", "", "key for encryption!!!! Should be 32 Byte!!!")
-	CmdDecrypt.Flags().StringVar(&encryptionKeyFileFlag, "keyFile", "", "key for encryption!!!! Should be 32 Byte!!!")
+	CmdDecrypt.Flags().StringVar(&decryptionKeyFlag, "key", "", "key for encryption!!!! Should be 32 Byte!!!")
+	CmdDecrypt.Flags().StringVar(&decryptionKeyFileFlag, "keyFile", "", "key for encryption!!!! Should be 32 Byte!!!")
 }
 
-func decrypt(args []string, encryptionKeyFlag string, encryptionKeyFileFlag string) {
-	if len(encryptionKeyFlag) == 0 && len(encryptionKeyFileFlag) == 0 {
+func decrypt(args []string, decryptionKeyFlag string, decryptionKeyFileFlag string) {
+	if len(decryptionKeyFlag) == 0 && len(decryptionKeyFileFlag) == 0 {
 		log.Fatal("Neither the key nor the key file have been transferred.")
 	}
-	if len(encryptionKeyFlag) != 0 && len(encryptionKeyFileFlag) != 0 {
+	if len(decryptionKeyFlag) != 0 && len(decryptionKeyFileFlag) != 0 {
 		log.Print("The keyFile does not matter. The key has priority over the keyFile.")
 	}
 	encryptionKey := make([]byte, 32)
-	if len(encryptionKeyFlag) != 0 {
-		if len(encryptionKeyFlag) < 32 {
+	if len(decryptionKeyFlag) != 0 {
+		if len(decryptionKeyFlag) < 32 {
 			log.Fatal("Key should be 32 bytes")
 		}
-		if len(encryptionKeyFlag) > 32 {
+		if len(decryptionKeyFlag) > 32 {
 			log.Print("Key should be 32 bytes. Only the first 32 bytes will be used.")
 		}
-		encryptionKey = []byte(encryptionKeyFlag[:32])
+		encryptionKey = []byte(decryptionKeyFlag[:32])
 	} else {
-		encryptionKey = utils.ReadKeyFromFile(encryptionKeyFileFlag)
+		encryptionKey = utils.ReadKeyFromFile(decryptionKeyFileFlag)
 	}
 
 	fileToDecode, _ := os.Open(args[0])
